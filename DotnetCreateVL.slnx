@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="DotnetCreateVL/DotnetCreateVL.csproj" />
+  <Project Path="DotnetCreateVL.Tests/DotnetCreateVL.Tests.csproj" />
+</Solution>
