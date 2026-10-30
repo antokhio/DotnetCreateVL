@@ -217,7 +217,7 @@ On **n**: `Edit target:` (skipped with one target) → MultiSelect `Change what 
 
 Blocking: export without an entry, export when the installation lacks `vvvvc.exe`, dev without `vvvv.exe`, a libraries build with no prerequisites, two export targets landing in the same `<root>\<App>` folder, or no target doing anything. No targets at all (package repository with VL-only packages) is a warning; the files then contain only the shared vvvv launch command.
 
-Fixed at generation (not asked): `--output-type WinExe`, `--rid win-x64`, `--asset-behavior RelativeToDocument`, `--clean true`, `resources\icon.ico` as the app icon when present. The export goes straight into the export root (`<root>\<App>\` is removed first, staging is copied into it afterwards); there is no intermediate folder and no mirror copy.
+Fixed at generation (not asked): `--output-type WinExe`, `--rid win-x64`, `--asset-behavior RelativeToOutput`, `--clean true`, `resources\icon.ico` as the app icon when present. The export goes straight into the export root (`<root>\<App>\` is removed first, staging is copied into it afterwards); there is no intermediate folder and no mirror copy.
 
 CLI for targets: `--target-dev <t>=on|off`, `--target-build <t>=export|lib|none`, `--prereq <t>=<Project>` (repeat), `--export-root <t>=<dir>`, `--stage <t>=<src>[:<dst>]` (repeat). Summary: `✓ Pipeline (Just): Gallery (dev, export), Shapes (libraries) · default all`.
 

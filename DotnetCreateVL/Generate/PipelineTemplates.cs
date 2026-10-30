@@ -158,7 +158,7 @@ internal static class JustTemplates
             // vvvvc writes <out>/<app>/<app>.exe and keeps its generated C# in <out>/src (cleaned by --clean).
             sb.AppendLine("[private]").AppendLine("_export patch out app args:");
             sb.AppendLine("    @$app = '{{root / out / app}}'; if (Test-Path $app) { Remove-Item $app -Recurse -Force }; \\");
-            sb.AppendLine("    $a = @('{{root / patch}}', '--output-directory', '{{root / out}}', '--asset-behavior', 'RelativeToDocument', '--output-type', 'WinExe', '--rid', 'win-x64', '--clean', 'true'); \\");
+            sb.AppendLine("    $a = @('{{root / patch}}', '--output-directory', '{{root / out}}', '--asset-behavior', 'RelativeToOutput', '--output-type', 'WinExe', '--rid', 'win-x64', '--clean', 'true'); \\");
             foreach (var line in SharedArgLines(c, includeSources: true)) sb.AppendLine($"    {line} \\");
             sb.AppendLine("    if (Test-Path '{{icon}}') { $a += @('--app-icon', '{{icon}}') }; \\");
             sb.AppendLine("    $extra = @('{{args}}' -split '\\s+' | Where-Object { $_ }); \\");
@@ -242,7 +242,7 @@ internal static class CmdTemplates
             sb.AppendLine($"echo [export] {t.EntryPath} -^> {t.ExportRoot}\\{t.AppName}");
             sb.Append($"%VVVVC% \"%ROOT%{t.EntryPath}\"");
             foreach (var a in SharedArgs(c, includeSources: true)) sb.Append(' ').Append(a);
-            sb.AppendLine(" --output-directory \"%OUT%\" %ICON% --asset-behavior RelativeToDocument --output-type WinExe --rid win-x64 --clean true %* || exit /b 1");
+            sb.AppendLine(" --output-directory \"%OUT%\" %ICON% --asset-behavior RelativeToOutput --output-type WinExe --rid win-x64 --clean true %* || exit /b 1");
             foreach (var s in t.Staging)
             {
                 sb.AppendLine($"echo [copy] {s.Destination}");
