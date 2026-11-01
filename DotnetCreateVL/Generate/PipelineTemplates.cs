@@ -47,16 +47,42 @@ internal static class JustTemplates
     public static string Root(PipelineContext c)
     {
         var sb = new StringBuilder(Shell).AppendLine().AppendLine();
-        sb.AppendLine("mod dev '.just/dev.just'");
-        if (c.BuildTargets.Any()) sb.AppendLine("mod build '.just/build.just'");
+        // Just treats any word after a module name as a recipe inside it, so `just dev --flag` would fail
+        // with a public `mod dev`. Private modules plus same-named dispatch recipes accept both forms.
+        sb.AppendLine("[private]").AppendLine("mod _dev '.just/dev.just'");
+        var buildTargets = c.BuildTargets.ToList();
+        if (buildTargets.Count > 0) sb.AppendLine("[private]").AppendLine("mod _build '.just/build.just'");
         sb.AppendLine();
+
+        var devNames = OrderedDevTargets(c).Select(t => t.Name).Append(c.BareLaunch).ToList();
+        AppendDispatch(sb, "dev", "Open a dev target", devNames, DefaultDevTarget(c)?.Name ?? c.BareLaunch);
+        if (buildTargets.Count > 0)
+        {
+            var buildNames = (buildTargets.Count > 1 ? ["all"] : Enumerable.Empty<string>()).Concat(buildTargets.Select(t => t.Name)).ToList();
+            AppendDispatch(sb, "build", "Build a target", buildNames, buildNames[0]);
+        }
+
         var target = c.DefaultTarget;
-        var module = target == "all" || c.BuildTargets.Any(t => t.Name == target) ? "build"
+        var module = target == "all" || buildTargets.Any(t => t.Name == target) ? "build"
             : c.DevTargets.Any(t => t.Name == target) ? "dev"
             : null;
         if (module is null) { module = "dev"; target = c.BareLaunch; }
-        sb.AppendLine($"# Same as `just {module} {target}`").AppendLine($"default *args: ({module}::{target} args)");
+        sb.AppendLine($"# Same as `just {module} {target}`").AppendLine($"default *args: (_{module}::{target} args)");
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Public <c>just &lt;module&gt; [target] [args]</c> recipe: a leading known target name selects that recipe,
+    /// anything else is forwarded to the default target.
+    /// </summary>
+    private static void AppendDispatch(StringBuilder sb, string module, string what, IReadOnlyList<string> names, string fallback)
+    {
+        var pattern = string.Join("|", names.Select(System.Text.RegularExpressions.Regex.Escape));
+        sb.AppendLine($"# {what} (default {fallback}): just {module} [{string.Join("|", names)}] [args]")
+          .AppendLine($"{module} *args:")
+          .AppendLine($"    @& '{{{{just_executable()}}}}' --justfile '{{{{justfile()}}}}' --working-directory '{{{{justfile_directory()}}}}' " +
+                      $"_{module}::{{{{ if replace_regex(args, '^(\\S*).*$', '$1') =~ '^({pattern})$' {{ args }} else {{ trim('{fallback} ' + args) }} }}}}; exit $LASTEXITCODE")
+          .AppendLine();
     }
 
     /// <summary>Dev target run by a bare <c>just dev</c>: the default target when it opens a document, otherwise the first one.</summary>

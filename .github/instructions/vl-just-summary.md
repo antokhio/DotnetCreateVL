@@ -62,7 +62,8 @@ workspace-parent\
 - Keep a small project flat. Modules are useful for multiple targets or reusable steps, not mandatory.
 - Resolve paths from the repository root, not the caller's working directory or a module's `.just\` directory.
 - Use `__nugets` with `--nuget-path`; `.nupkg` files belong in a feed, not in the extracted cache as a substitute. Never clean either shared directory.
-- Public workflows are `just dev`, `just build`, and optionally `just pack`; multiple targets can use commands such as `just dev server`. Verify the installed Just version's module/import syntax and scope.
+multiple targets can use commands such as `just dev server`. Verify the installed Just version's module/import syntax and scope.
+- Just treats every word after a module name as a recipe inside that module, so a public `mod dev` rejects `just dev --allow-multiple`. Keep modules private (`[private] mod _dev`) and expose `dev *args` / `build *args` recipes that select a target when the first argument names one and otherwise forward all arguments to the default target.
 - Use distinct private helpers for library compilation, editor launch, export, and staging. Both `dev` and `build` must invoke their C# prerequisites; exposing a manual library-build helper alone is insufficient.
 
 ## Command and output contracts

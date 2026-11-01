@@ -65,8 +65,12 @@ public sealed class PlannerTests
         Assert.Contains("vvvv-public-feed", Entry(plan, "NuGet.config").Content);
         Assert.DoesNotContain(plan.Entries, e => e.Path == "LICENSE" || e.Path == ".csharpierrc");
 
-        Assert.Contains("mod build '.just/build.just'", Entry(plan, ".justfile").Content);
-        Assert.Contains("default *args: (build::all args)", Entry(plan, ".justfile").Content);
+        var root = Entry(plan, ".justfile").Content!;
+        Assert.Contains("[private]\nmod _build '.just/build.just'", root.Replace("\r\n", "\n"));
+        Assert.Contains("default *args: (_build::all args)", root);
+        // `just dev --flag` must reach the default target: a leading known name selects the recipe, anything else falls back.
+        Assert.Contains("_dev::{{ if replace_regex(args, '^(\\S*).*$', '$1') =~ '^(Gallery|vvvv)$' { args } else { trim('Gallery ' + args) } }}; exit $LASTEXITCODE", root);
+        Assert.Contains("_build::{{ if replace_regex(args, '^(\\S*).*$', '$1') =~ '^(all|Gallery|Shapes)$' { args } else { trim('all ' + args) } }}", root);
         var dev = Entry(plan, ".just\\dev.just").Content!;
         Assert.Contains("vvvv *args: (_launch '' args)", dev);
         Assert.Contains("# Open Gallery.vl (also `just dev`)\nGallery *args: (_launch 'Gallery.vl' args)", dev.Replace("\r\n", "\n"));
@@ -262,8 +266,9 @@ public sealed class PlannerTests
 
         var plan = Planner(m).Build();
 
-        Assert.Contains("default *args: (dev::Gallery args)", Entry(plan, ".justfile").Content);
-        Assert.DoesNotContain("mod build", Entry(plan, ".justfile").Content);
+        Assert.Contains("default *args: (_dev::Gallery args)", Entry(plan, ".justfile").Content);
+        Assert.DoesNotContain("mod _build", Entry(plan, ".justfile").Content);
+        Assert.DoesNotContain("build *args:", Entry(plan, ".justfile").Content);
         Assert.DoesNotContain(plan.Entries, e => e.Path == ".just\\build.just");
         Assert.Equal(["just dev Gallery", "just dev vvvv"], plan.Commands.Select(c => c.Command));
     }
